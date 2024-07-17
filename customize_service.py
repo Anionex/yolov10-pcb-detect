@@ -18,7 +18,7 @@ class yolov10_detection():
         self.capture = "test.png"
         self.window_size = 640  # 滑动窗口的大小
         self.step_size = 320  # 滑动窗口的步长
-        self.predict_conf = 0.1 # 预测准确阈值
+        self.predict_conf = 0.25 # 预测准确阈值
         self.nms_threshold = 0.5  # NMS 阈值
 
     def _preprocess(self, data):
@@ -45,7 +45,7 @@ class yolov10_detection():
     def _inference(self, data):
         image = Image.open(self.capture)
         pred_results = []
-
+        # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             window_image = window.convert('RGB')
             pred_result = self.model(source=window_image, conf=self.predict_conf)
@@ -86,6 +86,8 @@ class yolov10_detection():
             boxes = res.boxes._xyxy.cpu()  # 获取 bounding boxes 并转换为 CPU 张量
             scores = res.boxes.conf.cpu()  # 获取置信度分数并转换为 CPU 张量
             classes = res.boxes.cls.cpu()  # 获取类别索引并转换为 CPU 张量
+            print("fuck:", classes)
+            #如果不是missing_hole
 
             all_boxes.append(boxes)
             all_scores.append(scores)
@@ -96,7 +98,7 @@ class yolov10_detection():
         all_classes = torch.cat(all_classes)
 
         keep = ops.nms(all_boxes, all_scores, self.nms_threshold)
-
+        keep = [i for i in keep if all_classes[i] != 2]
         for i in keep:
             box = all_boxes[i].numpy()
             score = float(all_scores[i].numpy())

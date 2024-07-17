@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from ultralytics import YOLOv10
 import torch
+import torchvision.ops as ops
 from model_service.pytorch_model_service import PTServingBaseService
 
 # class yolov10_detection():
@@ -17,6 +18,7 @@ class yolov10_detection(PTServingBaseService):
         self.capture = "test.png"
         self.window_size = 640  # 滑动窗口的大小
         self.step_size = 320  # 滑动窗口的步长
+        self.predict_conf = 0.25 # 预测准确阈值
         self.nms_threshold = 0.5  # NMS 阈值
 
     def _preprocess(self, data):
@@ -46,7 +48,7 @@ class yolov10_detection(PTServingBaseService):
 
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             window_image = window.convert('RGB')
-            pred_result = self.model(source=window_image, conf=0.25)
+            pred_result = self.model(source=window_image, conf=self.predict_conf)
             for result in pred_result:
                 # 将检测到的结果位置映射回原图
                 result_cpu = result.cpu()  # 转换为 CPU 张量
@@ -60,41 +62,13 @@ class yolov10_detection(PTServingBaseService):
     
         return pred_results
 
-    def _non_max_suppression(self, boxes, scores, threshold):
-        keep = []
-        idxs = scores.argsort()[::-1]
-
-        while len(idxs) > 0:
-            i = idxs[0]
-            keep.append(i)
-            if len(idxs) == 1:
-                break
-            ious = self._iou(boxes[i], boxes[idxs[1:]])
-            idxs = idxs[1:][ious < threshold]
-        
-        return keep
-
-    def _iou(self, box1, boxes):
-        # 计算 box1 和 boxes 之间的交并比 (IoU)
-        x1 = np.maximum(box1[0], boxes[:, 0])
-        y1 = np.maximum(box1[1], boxes[:, 1])
-        x2 = np.minimum(box1[2], boxes[:, 2])
-        y2 = np.minimum(box1[3], boxes[:, 3])
-
-        inter_area = np.maximum(0, x2 - x1) * np.maximum(0, y2 - y1)
-        box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
-        boxes_area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
-
-        union_area = box1_area + boxes_area - inter_area
-        return inter_area / union_area
 
     def _postprocess(self, data):
         result = {}
         detection_classes = []
         detection_boxes = []
         detection_scores = []
-        
-        # 硬编码的类别名称列表
+
         class_names = [
             "Mouse_bite",
             "Spur",
@@ -109,34 +83,36 @@ class yolov10_detection(PTServingBaseService):
         all_classes = []
 
         for res in data:
-            boxes = res.boxes._xyxy.cpu().numpy()  # 获取 bounding boxes 并转换为 numpy 数组
-            scores = res.boxes.conf.cpu().numpy()  # 获取置信度分数并转换为 numpy 数组
-            classes = res.boxes.cls.cpu().numpy()  # 获取类别索引并转换为 numpy 数组
+            boxes = res.boxes._xyxy.cpu()  # 获取 bounding boxes 并转换为 CPU 张量
+            scores = res.boxes.conf.cpu()  # 获取置信度分数并转换为 CPU 张量
+            classes = res.boxes.cls.cpu()  # 获取类别索引并转换为 CPU 张量
+            print("fuck:", classes)
+            #如果不是missing_hole
 
-            all_boxes.extend(boxes)
-            all_scores.extend(scores)
-            all_classes.extend(classes)
+            all_boxes.append(boxes)
+            all_scores.append(scores)
+            all_classes.append(classes)
 
-        all_boxes = np.array(all_boxes)
-        all_scores = np.array(all_scores)
-        all_classes = np.array(all_classes)
+        all_boxes = torch.cat(all_boxes)
+        all_scores = torch.cat(all_scores)
+        all_classes = torch.cat(all_classes)
 
-        keep = self._non_max_suppression(all_boxes, all_scores, self.nms_threshold)
-
+        keep = ops.nms(all_boxes, all_scores, self.nms_threshold)
+        keep = [i for i in keep if all_classes[i] != 2]
         for i in keep:
-            box = all_boxes[i]
-            score = float(all_scores[i])
-            cls = int(all_classes[i])
+            box = all_boxes[i].numpy()
+            score = float(all_scores[i].numpy())
+            cls = int(all_classes[i].numpy())
 
             xmin, ymin, xmax, ymax = map(float, box)
             detection_boxes.append([ymin, xmin, ymax, xmax])
             detection_scores.append(score)
             detection_classes.append(class_names[cls])
-                
+
         result['detection_classes'] = detection_classes
         result['detection_boxes'] = detection_boxes
         result['detection_scores'] = detection_scores
-        
-        print('result:', result)   
-        
+
+        print('result:', result)
+
         return result

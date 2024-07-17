@@ -4,7 +4,7 @@ import json, numpy as np
 import cv2
 
 image_name = "\
-07_Spurious_copper_Img.bmp\
+02_Mouse_bite.bmp\
 "
 test_path = f"data/{image_name}"
 service = yolov10_detection(model_name="yolov10", model_path="weights/best.pt")
@@ -46,7 +46,7 @@ for i in range(len(result['detection_boxes'])):
     cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 0), 2)
     
     # 添加标签和置信度
-    label_text = f"{label}: {score:.5f}"
+    label_text = f"{label}: {score:.2f}"
     cv2.putText(image, label_text, (int(xmin), int(ymin) - 10), font, font_scale, font_color, line_type)
 
 # 保存生成的图片

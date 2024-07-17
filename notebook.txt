@@ -2,14 +2,13 @@ wget  -O ./weights/yolov10s.pt  https://github.com/THU-MIG/yolov10/releases/down
 
 
 yolo task=detect mode=predict  save=True `
-model=C:/Users/10051/Desktop/yolov10-test/yolov10/runs/detect/train5/weights/best-tmp.pt `
-source=./data/01_Mouse_bite.bmp
+model=C:/Users/10051/Desktop/yolov10-test/yolov10/runs/detect/train5/weights/best-tmp.pt  source=./data/01_Mouse_bite.bmp
 
 
 # 使用 Measure-Command 来测量训练所用的时间
 $duration = Measure-Command {`
     # 执行 YOLOv5 训练命令`
-    yolo task=detect mode=train epochs=100 batch=16 plots=True `
+    yolo task=detect mode=train epochs=2 batch=16 plots=True `
     model=weights/yolov10s.pt `
     data=datasets/pcb-defect-dataset/data.yaml`
     device=0`
@@ -62,4 +61,12 @@ Training completed in 4 hours, 20 minutes, 10 seconds.
 
 ###
 
+
+
+
+
+
+
+docker run -itd --cap-add=SYS_PTRACE -e ASCEND_VISIBLE_DEVICES=0  -v /home:/home_host -p 51234:22 -u=0 --name myimageaaa  swr.cn-southwest-2.myhuaweicloud.com/atelier/pytorch_1_11_ascend:pytorch_1.11.0-cann_7.0.1-py_3.9-euler_2.10.7-aarch64-snt9b-20231107190844-50a1a83  /bin/bash
+cker pull swr.cn-southwest-2.myhuaweicloud.com/atelier/pytorch_1_11_ascend:pytorch_1.11.0-cann_7.0.1-py_3.9-euler_2.10.7-aarch64-snt9b-20231107190844-50a1a83~
 
