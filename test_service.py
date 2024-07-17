@@ -4,7 +4,7 @@ import json, numpy as np
 import cv2
 
 image_name = "\
-02_Mouse_bite.bmp\
+01_Mouse_bite.bmp\
 "
 test_path = f"data/{image_name}"
 service = yolov10_detection(model_name="yolov10", model_path="weights/best.pt")
@@ -53,6 +53,10 @@ for i in range(len(result['detection_boxes'])):
 output_path = f"tmp_output/{image_name}"
 cv2.imwrite(output_path, image)
 print(f"Result image saved to {output_path}.")
+
+#打开图片
+current_dir = os.path.dirname(os.path.abspath(__file__))
+os.startfile(os.path.join(current_dir, output_path))
 
 
 

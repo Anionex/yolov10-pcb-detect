@@ -45,7 +45,7 @@ class yolov10_detection(PTServingBaseService):
     def _inference(self, data):
         image = Image.open(self.capture)
         pred_results = []
-
+        # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             window_image = window.convert('RGB')
             pred_result = self.model(source=window_image, conf=self.predict_conf)
@@ -86,7 +86,7 @@ class yolov10_detection(PTServingBaseService):
             boxes = res.boxes._xyxy.cpu()  # 获取 bounding boxes 并转换为 CPU 张量
             scores = res.boxes.conf.cpu()  # 获取置信度分数并转换为 CPU 张量
             classes = res.boxes.cls.cpu()  # 获取类别索引并转换为 CPU 张量
-            print("fuck:", classes)
+            # print("clses:", classes)
             #如果不是missing_hole
 
             all_boxes.append(boxes)
