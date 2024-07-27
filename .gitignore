@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 tmp_output/
+test.png
+ultralytics.egg-info/
+
 data/
 
 # C extensions
@@ -149,7 +152,6 @@ tests/
 # Neural Network weights -----------------------------------------------------------------------------------------------
 weights/
 *.weights
-*.pt
 *.pb
 *.onnx
 *.engine
