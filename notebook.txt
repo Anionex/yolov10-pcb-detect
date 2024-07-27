@@ -1,4 +1,5 @@
 wget  -O ./weights/yolov10s.pt  https://github.com/THU-MIG/yolov10/releases/download/v1.1/yolov10s.pt
+wget  -O ./yolov8n.pt  https://github.com/THU-MIG/yolov10/releases/download/v1.1/yolov8n.pt
 
 
 yolo task=detect mode=predict  save=True `
@@ -36,7 +37,7 @@ conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=
 
 
 yolo task=detect mode=val model="path to your custom model" data="path to your data.yaml file" device=0
-
+yolo task=detect mode=val model="weights/best-A800.pt" data="C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\pcb-defect-dataset/data.yaml" device=0
     yolo task=detect mode=val model="C:/Users/10051/Desktop/yolov10-test/yolov10/runs/detect/train5/weights/best.pt" data="datasets/pcb-defect-dataset/data.yaml" conf=0.5 device=0
 
 

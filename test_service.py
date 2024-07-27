@@ -4,10 +4,10 @@ import json, numpy as np
 import cv2
 
 image_name = "\
-01_Mouse_bite.bmp\
+02_Short_Img.bmp\
 "
 test_path = f"data/{image_name}"
-service = yolov10_detection(model_name="yolov10", model_path="weights/best.pt")
+service = yolov10_detection(model_name="yolov10", model_path="weights/best-A800.pt")
 
 post_data = {"input_txt": {os.path.basename(test_path): open(test_path, "rb")}}
 
