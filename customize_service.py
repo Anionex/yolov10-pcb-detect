@@ -16,7 +16,7 @@ class yolov10_detection():
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 768  # 滑动窗口的大小
+        self.window_size = 640  # 滑动窗口的大小
         self.step_size = 640  # 滑动窗口的步长
         self.predict_conf = 0.25 # 预测准确阈值
         self.nms_threshold = 0.2  # NMS 阈值
@@ -45,14 +45,38 @@ class yolov10_detection():
 
 
     def _inference(self, data):
-        image = cv2.imread(self.capture)
-        image = cv2.imread(self.capture, cv2.IMREAD_GRAYSCALE)
-        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-        print(image.shape)
+        image = cv2.imread(self.capture) # imread的通道为BGR
+        
+        # image = cv2.imread(self.capture, cv2.IMREAD_GRAYSCALE)
+        # image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        # 注释原因：大图直接预处理效果不佳，改在每个小窗口处理
+        
+        # print(image.shape) # 此处需要保证满足模型输入要求，三维矩阵(w,h,3)
         pred_results = []
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
-            window_image = window
-            print(window_image.shape)
+            
+            # 转化为灰度图像
+            
+            window_image = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
+            
+            # 预处理（去噪和模糊处理）
+            window_image = cv2.medianBlur(window_image, 5)  # 中值滤波去噪
+            window_image = cv2.GaussianBlur(window_image, (5, 5), 0)  # 高斯模糊
+            
+            # 自适应阈值二值化
+            window_image = cv2.adaptiveThreshold(window_image, 255, 
+                                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                                cv2.THRESH_BINARY, 
+                                                11, 2
+                                                )
+            
+                    # 临时翻转一下黑白，等一会删除
+            window_image = 255 - window_image
+            
+            # 转化为bgr图像
+            window_image = cv2.cvtColor(window_image, cv2.COLOR_GRAY2BGR)
+            
+            
             pred_result = self.model(window_image, conf=self.predict_conf)
             for result in pred_result:
                 # 将检测到的结果位置映射回原图

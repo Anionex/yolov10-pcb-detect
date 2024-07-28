@@ -30,7 +30,7 @@ def postprocess(data):
 # 读取标注文件
 def read_annotations(image_path):
     base_name = os.path.splitext(os.path.basename(image_path))[0]
-    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets/pcb-defect-dataset"]
+    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets"]
     
     for search_dir in search_dirs:
         # 遍历目录及其所有子目录
@@ -40,6 +40,7 @@ def read_annotations(image_path):
                     annotation_file = os.path.join(root, file)
                     with open(annotation_file, 'r') as f:
                         annotations = [line.strip().split() for line in f.readlines()]
+                        print("found annotation file:", annotation_file)
                         return annotations
     
     return []
@@ -61,7 +62,9 @@ def draw_boxes(image_path, result):
         score = result['detection_scores'][i]
 
         ymin, xmin, ymax, xmax = box
-        cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 0), 2)
+        print(f"print a bbox at {xmin}, {ymin}, {xmax}, {ymax}")
+        cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255), 2)
+        
         label_text = f"{label}: {score:.2f}"
         cv2.putText(image, label_text, (int(xmin), int(ymin) - 10), font, font_scale, font_color, line_type)
 
@@ -98,33 +101,36 @@ def draw_labels(image_path, annotations):
 
 # 目标检测函数，综合以上各个步骤
 def detect_objects(image_path):
-    if image_path in cache:
-        return cache[image_path]
+    # if image_path in cache:
+    #     return cache[image_path]
 
     # 调用服务处理图像
     post_data = preprocess_image(image_path)
     data = inference(post_data)
     result = postprocess(data)
     
-    # 读取标注文件
-    annotations = read_annotations(image_path)
+
     
     # 绘制检测结果和标注框
     predicted_image_path = draw_boxes(image_path, result)
-    labeled_image_path = draw_labels(image_path, annotations)
+    
 
     # 将结果存入缓存
-    cache[image_path] = (predicted_image_path, labeled_image_path)
+    cache[image_path] = predicted_image_path
     
-    return predicted_image_path, labeled_image_path
+    return predicted_image_path
 
 # 定义Gradio界面
 def display_predicted_image(image_path):
-    predicted_image_path, _ = detect_objects(image_path)
+    predicted_image_path = detect_objects(image_path)
     return predicted_image_path
 
 def display_labeled_image(image_path):
-    _, labeled_image_path = detect_objects(image_path)
+    print("starting display_labeled_image")
+    # 读取标注文件
+    annotations = read_annotations(image_path)
+    labeled_image_path = draw_labels(image_path, annotations)
+    
     return labeled_image_path
 
 def update_image(choice, image_path):
