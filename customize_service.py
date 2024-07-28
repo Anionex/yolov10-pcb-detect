@@ -2,9 +2,9 @@ import os
 import glob
 import shutil
 import numpy as np
-from PIL import Image
 from ultralytics import YOLOv10
 import torch
+import cv2
 import torchvision.ops as ops
 # from model_service.pytorch_model_service import PTServingBaseService
 
@@ -16,10 +16,10 @@ class yolov10_detection():
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 640  # 滑动窗口的大小
-        self.step_size = 320  # 滑动窗口的步长
+        self.window_size = 768  # 滑动窗口的大小
+        self.step_size = 640  # 滑动窗口的步长
         self.predict_conf = 0.25 # 预测准确阈值
-        self.nms_threshold = 0.5  # NMS 阈值
+        self.nms_threshold = 0.2  # NMS 阈值
 
     def _preprocess(self, data):
         for _, v in data.items():
@@ -29,26 +29,31 @@ class yolov10_detection():
                     f.write(file_content_bytes)
         return "ok"
     
+
     def _slide_window(self, image, window_size, step_size):
-        width, height = image.size
+        height, width = image.shape[:2]  # For grayscale, use image.shape
         
         for y in range(0, height, step_size):
             for x in range(0, width, step_size):
-                # 确保窗口在图像边缘处适当裁剪
+                # Ensure the window is properly cropped at the image edges
                 crop_x = min(x, width - window_size)
                 crop_y = min(y, height - window_size)
-                yield (crop_x, crop_y, image.crop((crop_x, crop_y, crop_x + window_size, crop_y + window_size)))
-                
+                cropped_image = image[crop_y:crop_y + window_size, crop_x:crop_x + window_size]
+                yield (crop_x, crop_y, cropped_image)
+
                 
 
 
     def _inference(self, data):
-        image = Image.open(self.capture)
+        image = cv2.imread(self.capture)
+        image = cv2.imread(self.capture, cv2.IMREAD_GRAYSCALE)
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        print(image.shape)
         pred_results = []
-        # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             window_image = window
-            pred_result = self.model(source=window_image, conf=self.predict_conf)
+            print(window_image.shape)
+            pred_result = self.model(window_image, conf=self.predict_conf)
             for result in pred_result:
                 # 将检测到的结果位置映射回原图
                 result_cpu = result.cpu()  # 转换为 CPU 张量

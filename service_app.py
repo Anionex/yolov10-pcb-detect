@@ -6,7 +6,7 @@ import numpy as np
 from customize_service import yolov10_detection
 
 # 初始化目标检测服务
-service = yolov10_detection(model_name="yolov10", model_path="weights/best-A800.pt")
+service = yolov10_detection(model_name="yolov10", model_path="weights/best-A800-mix.pt")
 
 # 用于缓存预测和标注结果的字典
 cache = {}
@@ -30,7 +30,7 @@ def postprocess(data):
 # 读取标注文件
 def read_annotations(image_path):
     base_name = os.path.splitext(os.path.basename(image_path))[0]
-    search_dirs = [r"C:\Users\10051\Desktop\ydw\项目小组\26赛道华为智检\data\PCB_瑕疵初赛样例集", "datasets/pcb-defect-dataset"]
+    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets/pcb-defect-dataset"]
     
     for search_dir in search_dirs:
         # 遍历目录及其所有子目录
@@ -132,6 +132,69 @@ def update_image(choice, image_path):
         return display_predicted_image(image_path)
     elif choice == "Labeled Image":
         return display_labeled_image(image_path)
+    elif choice == "Grayscale Image":
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        output_path = f"tmp_output/gray_{os.path.basename(image_path)}"
+        image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        # with open("tmp_output/gray.txt", "w") as f:
+        #     # 转换为普通数组
+        #     image2 = image.tolist()
+        #     f.write(str(image2))
+        
+        cv2.imwrite(output_path, image)
+        return output_path
+    elif choice == "Binary Image":
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        # 高斯滤波，用于平滑图片，去除噪声
+        image = cv2.GaussianBlur(image,(5,5),0)
+        _, binary_image = cv2.threshold(image, 75, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)
+        output_path = f"tmp_output/binary_{os.path.basename(image_path)}"
+        binary_image = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2RGB)
+        cv2.imwrite(output_path, binary_image)
+        return output_path
+    elif choice == "Edge Image":
+        def example_method2(image_path):
+            # 读取图像
+            image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            
+            # # 预处理（去噪和模糊处理）
+            blurred = cv2.medianBlur(image, 5)  # 中值滤波去噪
+            blurred = cv2.GaussianBlur(blurred, (5, 5), 0)  # 高斯模糊
+            # 自适应阈值二值化
+            binary_image = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
+                                                cv2.THRESH_BINARY, 11, 2)
+            
+            # binary_image = cv2.medianBlur(binary_image, 3)  # 中值滤波去噪
+            # binary_image = cv2.GaussianBlur(binary_image, (5, 5), 0)
+            return binary_image 
+            # 形态学处理（闭运算和膨胀腐蚀）
+            kernel = np.ones((3, 3), np.uint8)
+            binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel, iterations=2)  # 闭运算
+            binary_image = cv2.dilate(binary_image, kernel, iterations=2)  # 膨胀
+            binary_image = cv2.erode(binary_image, kernel, iterations=2)  # 腐蚀
+            
+            # 连通组件分析
+            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_image, connectivity=8)
+
+            # 后处理（根据面积过滤小的连通组件）
+            min_area = 500  # 根据实际情况调整
+            filtered_binary_image = np.zeros(binary_image.shape, dtype=np.uint8)
+            for i in range(1, num_labels):  # 跳过背景
+                if stats[i, cv2.CC_STAT_AREA] >= min_area:
+                    filtered_binary_image[labels == i] = 255
+
+            # 轮廓检测和填充
+            contours, _ = cv2.findContours(filtered_binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            cv2.drawContours(filtered_binary_image, contours, -1, (255), thickness=cv2.FILLED)
+            return filtered_binary_image
+                    
+        return example_method2(image_path)
+        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        edge_image = cv2.Canny(image, 100, 200)
+        output_path = f"tmp_output/edge_{os.path.basename(image_path)}"
+        edge_image = cv2.cvtColor(edge_image, cv2.COLOR_GRAY2RGB)
+        cv2.imwrite(output_path, edge_image)
+        return output_path
 
 def run_batch_val():
     pass
@@ -149,6 +212,10 @@ with gr.Blocks() as demo:
     with gr.Row():
         btn_pred = gr.Button("Show Predicted Image")
         btn_label = gr.Button("Show Labeled Image")
+        btn_grayscale = gr.Button("Show Grayscale Image")
+        btn_binary = gr.Button("Show Binary Image")
+        # 边缘检测按钮
+        btn_edge = gr.Button("Show Edge Image")
     clear_cache.render()
     with gr.Row():
         image_output.render()
@@ -157,8 +224,12 @@ with gr.Blocks() as demo:
 
     btn_pred.click(update_image, inputs=[gr.State("Predicted Image"), image_input], outputs=image_output)
     btn_label.click(update_image, inputs=[gr.State("Labeled Image"), image_input], outputs=image_output)
-    clear_cache.click(run_batch_val)
-    run_batch_val_btn.click()
+    btn_grayscale.click(update_image, inputs=[gr.State("Grayscale Image"), image_input], outputs=image_output)
+    btn_binary.click(update_image, inputs=[gr.State("Binary Image"), image_input], outputs=image_output)
+    btn_edge.click(update_image, inputs=[gr.State("Edge Image"), image_input], outputs=image_output)
+    
+    clear_cache.click(lambda: cache.clear())
+    run_batch_val_btn.click(run_batch_val)
 # 启动Gradio应用
 if __name__ == "__main__":
     if not os.path.exists("tmp_output"):

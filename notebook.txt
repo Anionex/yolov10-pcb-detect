@@ -11,7 +11,7 @@ $duration = Measure-Command {`
     # 执行 YOLOv5 训练命令`
     yolo task=detect mode=train epochs=2 batch=16 plots=True `
     model=weights/yolov10s.pt `
-    data=datasets/pcb-defect-dataset/data.yaml`
+    data=datasets/data.yaml`
     device=0`
 }`
 # 输出训练所用的总时间`

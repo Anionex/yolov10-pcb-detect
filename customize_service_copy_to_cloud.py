@@ -16,10 +16,10 @@ class yolov10_detection(PTServingBaseService):
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 640  # 滑动窗口的大小
-        self.step_size = 320  # 滑动窗口的步长
-        self.predict_conf = 0.25 # 预测准确阈值
-        self.nms_threshold = 0.5  # NMS 阈值
+        self.window_size = 768  # 滑动窗口的大小
+        self.step_size = 640  # 滑动窗口的步长
+        self.predict_conf = 0.5 # 预测准确阈值
+        self.nms_threshold = 0.2  # NMS 阈值
 
     def _preprocess(self, data):
         for _, v in data.items():
@@ -47,8 +47,8 @@ class yolov10_detection(PTServingBaseService):
         pred_results = []
         # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
-            window_image = window.convert('RGB')
-            pred_result = self.model(source=window_image, conf=self.predict_conf)
+            window_image = window
+            pred_result = self.model(source=window_image.convert('L'), conf=self.predict_conf)
             for result in pred_result:
                 # 将检测到的结果位置映射回原图
                 result_cpu = result.cpu()  # 转换为 CPU 张量
@@ -86,7 +86,7 @@ class yolov10_detection(PTServingBaseService):
             boxes = res.boxes._xyxy.cpu()  # 获取 bounding boxes 并转换为 CPU 张量
             scores = res.boxes.conf.cpu()  # 获取置信度分数并转换为 CPU 张量
             classes = res.boxes.cls.cpu()  # 获取类别索引并转换为 CPU 张量
-            # print("clses:", classes)
+            print("clses:", classes)
             #如果不是missing_hole
 
             all_boxes.append(boxes)
