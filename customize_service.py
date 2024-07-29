@@ -6,6 +6,7 @@ from ultralytics import YOLOv10
 import torch
 import cv2
 import torchvision.ops as ops
+from skimage.filters import threshold_sauvola
 # from model_service.pytorch_model_service import PTServingBaseService
 
 class yolov10_detection():
@@ -16,9 +17,11 @@ class yolov10_detection():
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 640  # 滑动窗口的大小
-        self.step_size = 640  # 滑动窗口的步长
-        self.predict_conf = 0.25 # 预测准确阈值
+        # 此处跳到600，以适应两个数据集的图片大小
+        # 训练时，也应该调到600
+        self.window_size = 600  # 滑动窗口的大小
+        self.step_size = 480   # 滑动窗口的步长
+        self.predict_conf = 0.6 # 预测准确阈值
         self.nms_threshold = 0.2  # NMS 阈值
 
     def _preprocess(self, data):
@@ -55,26 +58,30 @@ class yolov10_detection():
         pred_results = []
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             
-            # 转化为灰度图像
+            # window_image = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
+
+            # def gamma_correction(img, gamma=0.3):
+            #     invGamma = 1.0 / gamma
+            #     table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+            #     return cv2.LUT(img, table)
             
-            window_image = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY)
+            # gamma_corrected_image = gamma_correction(window_image)
+
+            # def sauvola_threshold(img, window_size=25, k=0.3):
+            #     thresh_sauvola = threshold_sauvola(img, window_size=window_size, k=k)
+            #     binary_sauvola = img > thresh_sauvola
+            #     return (binary_sauvola * 255).astype(np.uint8)
             
-            # 预处理（去噪和模糊处理）
-            window_image = cv2.medianBlur(window_image, 5)  # 中值滤波去噪
-            window_image = cv2.GaussianBlur(window_image, (5, 5), 0)  # 高斯模糊
+            # window_image = sauvola_threshold(gamma_corrected_image)
             
-            # 自适应阈值二值化
-            window_image = cv2.adaptiveThreshold(window_image, 255, 
-                                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                                cv2.THRESH_BINARY, 
-                                                11, 2
-                                                )
+            # # 形态学处理（可选）
+            # kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+            # window_image = cv2.morphologyEx(window_image, cv2.MORPH_CLOSE, kernel)
             
-                    # 临时翻转一下黑白，等一会删除
-            window_image = 255 - window_image
             
+            window_image = window
             # 转化为bgr图像
-            window_image = cv2.cvtColor(window_image, cv2.COLOR_GRAY2BGR)
+            # window_image = cv2.cvtColor(window_image, cv2.COLOR_RGB2BGR)
             
             
             pred_result = self.model(window_image, conf=self.predict_conf)

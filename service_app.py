@@ -4,9 +4,10 @@ import json
 import cv2
 import numpy as np
 from customize_service import yolov10_detection
+from skimage.filters import threshold_sauvola
 
 # 初始化目标检测服务
-service = yolov10_detection(model_name="yolov10", model_path="weights/best-A800-mix.pt")
+service = yolov10_detection(model_name="yolov10", model_path="weights/best.pt")
 
 # 用于缓存预测和标注结果的字典
 cache = {}
@@ -142,65 +143,61 @@ def update_image(choice, image_path):
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         output_path = f"tmp_output/gray_{os.path.basename(image_path)}"
         image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-        # with open("tmp_output/gray.txt", "w") as f:
-        #     # 转换为普通数组
-        #     image2 = image.tolist()
-        #     f.write(str(image2))
         
         cv2.imwrite(output_path, image)
         return output_path
-    elif choice == "Binary Image":
-        image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        # 高斯滤波，用于平滑图片，去除噪声
-        image = cv2.GaussianBlur(image,(5,5),0)
-        _, binary_image = cv2.threshold(image, 75, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)
-        output_path = f"tmp_output/binary_{os.path.basename(image_path)}"
-        binary_image = cv2.cvtColor(binary_image, cv2.COLOR_GRAY2RGB)
-        cv2.imwrite(output_path, binary_image)
-        return output_path
     elif choice == "Edge Image":
-        def example_method2(image_path):
-            # 读取图像
-            image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-            
-            # # 预处理（去噪和模糊处理）
-            blurred = cv2.medianBlur(image, 5)  # 中值滤波去噪
-            blurred = cv2.GaussianBlur(blurred, (5, 5), 0)  # 高斯模糊
-            # 自适应阈值二值化
-            binary_image = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
-                                                cv2.THRESH_BINARY, 11, 2)
-            
-            # binary_image = cv2.medianBlur(binary_image, 3)  # 中值滤波去噪
-            # binary_image = cv2.GaussianBlur(binary_image, (5, 5), 0)
-            return binary_image 
-            # 形态学处理（闭运算和膨胀腐蚀）
-            kernel = np.ones((3, 3), np.uint8)
-            binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel, iterations=2)  # 闭运算
-            binary_image = cv2.dilate(binary_image, kernel, iterations=2)  # 膨胀
-            binary_image = cv2.erode(binary_image, kernel, iterations=2)  # 腐蚀
-            
-            # 连通组件分析
-            num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(binary_image, connectivity=8)
-
-            # 后处理（根据面积过滤小的连通组件）
-            min_area = 500  # 根据实际情况调整
-            filtered_binary_image = np.zeros(binary_image.shape, dtype=np.uint8)
-            for i in range(1, num_labels):  # 跳过背景
-                if stats[i, cv2.CC_STAT_AREA] >= min_area:
-                    filtered_binary_image[labels == i] = 255
-
-            # 轮廓检测和填充
-            contours, _ = cv2.findContours(filtered_binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            cv2.drawContours(filtered_binary_image, contours, -1, (255), thickness=cv2.FILLED)
-            return filtered_binary_image
-                    
-        return example_method2(image_path)
+        # 读取图像
+        kernel_size = 3
+        low_threshold = 50
+        high_threshold = 150
+        image = cv2.imread(image_path)
+        if image is None:
+            raise ValueError(f"无法加载图像: {image_path}")
+        
+        # 转换为灰度图像
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        
+        # 高斯滤波去噪
+        gray_image = cv2.GaussianBlur(gray_image, (kernel_size, kernel_size), 0)
+        
+        # Canny边缘检测
+        edges = cv2.Canny(gray_image, low_threshold, high_threshold)
+        
+        # 形态学处理（可选）
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        
+        return edges
+    elif choice == "Binary Image":
+        
         image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        edge_image = cv2.Canny(image, 100, 200)
-        output_path = f"tmp_output/edge_{os.path.basename(image_path)}"
-        edge_image = cv2.cvtColor(edge_image, cv2.COLOR_GRAY2RGB)
-        cv2.imwrite(output_path, edge_image)
-        return output_path
+        if image is None:
+            raise ValueError(f"无法加载图像: {image_path}")
+
+        def gamma_correction(img, gamma=0.3):
+            invGamma = 1.0 / gamma
+            table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
+            return cv2.LUT(img, table)
+        
+        gamma_corrected_image = gamma_correction(image)
+
+        def sauvola_threshold(img, window_size=25, k=0.3):
+            thresh_sauvola = threshold_sauvola(img, window_size=window_size, k=k)
+            binary_sauvola = img > thresh_sauvola
+            return (binary_sauvola * 255).astype(np.uint8)
+        
+        binary_image = sauvola_threshold(gamma_corrected_image)
+        
+        # 形态学处理（可选）
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+        binary_image = cv2.morphologyEx(binary_image, cv2.MORPH_CLOSE, kernel)
+        return binary_image
+
+
+
+        
+                    
 
 def run_batch_val():
     pass

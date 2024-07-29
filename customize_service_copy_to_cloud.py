@@ -16,10 +16,10 @@ class yolov10_detection(PTServingBaseService):
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 768  # 滑动窗口的大小
-        self.step_size = 640  # 滑动窗口的步长
-        self.predict_conf = 0.5 # 预测准确阈值
-        self.nms_threshold = 0.2  # NMS 阈值
+        self.window_size = 640  # 滑动窗口的大小
+        self.step_size = 480  # 滑动窗口的步长
+        self.predict_conf = 0.6 # 预测准确阈值
+        self.nms_threshold = 0.1  # NMS 阈值
 
     def _preprocess(self, data):
         for _, v in data.items():
@@ -48,7 +48,7 @@ class yolov10_detection(PTServingBaseService):
         # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             window_image = window
-            pred_result = self.model(source=window_image.convert('L'), conf=self.predict_conf)
+            pred_result = self.model(source=window_image, conf=self.predict_conf)
             for result in pred_result:
                 # 将检测到的结果位置映射回原图
                 result_cpu = result.cpu()  # 转换为 CPU 张量
