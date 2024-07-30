@@ -1,32 +1,33 @@
-import comet_ml
+# import comet_ml
 import torch
-# import torch_npu
-# import torchvision
-# import torchvision_npu
-# from torch_npu.contrib import transfer_to_npu
 from ultralytics import YOLOv10
-
 import os
-os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
+
+# os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
 if __name__ == '__main__':
     
 
-    comet_ml.init(project_name="yolov10-pcb-defect-detection")
-    
-    torch.cuda.empty_cache()
+    # comet_ml.init(project_name="yolov10-pcb-defect-detection")
     # Load a model
+    torch.cuda.empty_cache()
     model = YOLOv10("weights/yolov10s.pt")  # load a pretrained model (recommended for training)
 
-    # since we have early stop in the training, we can train the model for a large number of epochs
-    results = model.train(project="yolov10-pcb-defect-detection", 
-                          data="datasets/data.yaml", 
-                          epochs=10000, 
-                          imgsz=640, 
-                          device=0, 
-                          plots=True, 
-                          batch=16,
-                          degrees=180,
-                          rect=True,
-                          )
-
+    # Train the model with 2 GPUs
+    results = model.train(
+        data="datasets/data.yaml", 
+        epochs=200, # 300个epoch是一个合理的初始值，但由于我的数据集
+        imgsz=608, # imgsz应该尽量贴近训练集图片的大小，但是要是32的倍数
+        plots=True, batch=64,
+        # close_mosaic=500,
+        # project="yolov10-pcb-defect-detection",
+        # degrees=180,
+        auto_augment="autoaugment",
+        cache=True, # 缓存数据集，加快训练速度
+        hsv_h=0.5, # 调整图像的色调，对提高模型对不同颜色的物体的识别能力有帮助
+        translate=0.2, # 平移图像，帮助模型识别边角的物体
+        flipud=0.5, # 以指定概率上下翻转图像
+        bgr=0.5, # 以指定概率随机改变图像的颜色通道顺序，提高模型对不同颜色的物体的识别能力
+        crop_fraction=0, # 因为边角信息很重要，所以不裁剪图像
+        device=[0, 1],
+    )
 

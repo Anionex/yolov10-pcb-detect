@@ -103,8 +103,8 @@ def draw_labels(image_path, annotations):
 
 # 目标检测函数，综合以上各个步骤
 def detect_objects(image_path):
-    # if image_path in cache:
-    #     return cache[image_path]
+    if image_path in cache:
+        return cache[image_path]
 
     # 调用服务处理图像
     post_data = preprocess_image(image_path)

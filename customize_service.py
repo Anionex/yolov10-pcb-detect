@@ -18,8 +18,8 @@ class yolov10_detection():
         self.capture = "test.png"
         # 此处跳到608，以适应两个数据集的图片大小
         # 训练时，也应该调到608(32倍数)
-        self.window_size = 408 # 滑动窗口的大小
-        self.step_size = 320   # 滑动窗口的步长
+        self.window_size = 608 # 滑动窗口的大小
+        self.step_size = 304   # 滑动窗口的步长
         self.predict_conf = 0.5 # 预测准确阈值
         self.nms_threshold = 0.1  # NMS 阈值
 
@@ -38,7 +38,7 @@ class yolov10_detection():
         
         for y in range(0, height, step_size):
             for x in range(0, width, step_size):
-                print(f"detect area: ({x}, {y})")
+                print(f"detect area left top: ({x}, {y})")
                 # Ensure the window is properly cropped at the image edges
                 crop_x = min(x, width - window_size)
                 crop_y = min(y, height - window_size)
@@ -51,12 +51,9 @@ class yolov10_detection():
                 #     # cv2.circle(cropped_image, (1184 - crop_x, 1023 - crop_y), 10, (0, 255, 0), 2)
                     
                 
-                # # 保存窗口图片到tmp_output/
-                # cv2.imwrite(f"tmp_output/windows/{crop_x}_{crop_y}.png", cropped_image)
+                # 保存窗口图片到tmp_output/
+                cv2.imwrite(f"tmp_output/windows/{crop_x}_{crop_y}.png", cropped_image)
                 
-                # # 判断本窗口图像有没有包含1184，1023
-                # if crop_x <= 1184 and crop_x + window_size >= 1184 and crop_y <= 1023 and crop_y + window_size >= 1023:
-                #     print(f"window ({crop_x}, {crop_y}) contains (1184, 1023)")
                 yield (crop_x, crop_y, cropped_image)
 
                 
