@@ -2,9 +2,9 @@ import os
 import glob
 import shutil
 import numpy as np
-from PIL import Image
 from ultralytics import YOLOv10
 import torch
+import cv2
 import torchvision.ops as ops
 from model_service.pytorch_model_service import PTServingBaseService
 
@@ -16,8 +16,10 @@ class yolov10_detection(PTServingBaseService):
                 
         self.model = YOLOv10(model_path)
         self.capture = "test.png"
-        self.window_size = 640  # 滑动窗口的大小
-        self.step_size = 480  # 滑动窗口的步长
+        # 此处跳到600，以适应两个数据集的图片大小
+        # 训练时，也应该调到600
+        self.window_size = 480  # 滑动窗口的大小
+        self.step_size = 320   # 滑动窗口的步长
         self.predict_conf = 0.6 # 预测准确阈值
         self.nms_threshold = 0.1  # NMS 阈值
 
@@ -29,33 +31,54 @@ class yolov10_detection(PTServingBaseService):
                     f.write(file_content_bytes)
         return "ok"
     
+
     def _slide_window(self, image, window_size, step_size):
-        width, height = image.size
+        
+        height, width = image.shape[:2]  # For grayscale, use image.shape
         
         for y in range(0, height, step_size):
             for x in range(0, width, step_size):
-                # 确保窗口在图像边缘处适当裁剪
+                print(f"detect area: ({x}, {y})")
+                # Ensure the window is properly cropped at the image edges
                 crop_x = min(x, width - window_size)
                 crop_y = min(y, height - window_size)
-                yield (crop_x, crop_y, image.crop((crop_x, crop_y, crop_x + window_size, crop_y + window_size)))
+                cropped_image = image[crop_y:crop_y + window_size, crop_x:crop_x + window_size]
                 
+                # 判断本窗口图像有没有包含1184，1023
+                # if crop_x <= 1184 and crop_x + window_size >= 1184 and crop_y <= 1023 and crop_y + window_size >= 1023:
+                #     print(f"window ({crop_x}, {crop_y}) contains (1184, 1023)")
+                #     # 窗口左上角打上标记，就是这个图片
+                #     # cv2.circle(cropped_image, (1184 - crop_x, 1023 - crop_y), 10, (0, 255, 0), 2)
+                    
+                
+                # # 保存窗口图片到tmp_output/
+                # cv2.imwrite(f"tmp_output/windows/{crop_x}_{crop_y}.png", cropped_image)
+                
+                # # 判断本窗口图像有没有包含1184，1023
+                # if crop_x <= 1184 and crop_x + window_size >= 1184 and crop_y <= 1023 and crop_y + window_size >= 1023:
+                #     print(f"window ({crop_x}, {crop_y}) contains (1184, 1023)")
+                yield (crop_x, crop_y, cropped_image)
+
                 
 
 
     def _inference(self, data):
-        image = Image.open(self.capture)
+        image = cv2.imread(self.capture) # imread后的通道为BGR
+        
         pred_results = []
-        # .convert('L')
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
+            
             window_image = window
-            pred_result = self.model(source=window_image, conf=self.predict_conf)
+            
+            pred_result = self.model(window_image, conf=self.predict_conf)
             for result in pred_result:
+                
                 # 将检测到的结果位置映射回原图
                 result_cpu = result.cpu()  # 转换为 CPU 张量
                 result_clone = result_cpu.boxes.xyxy.clone()  # 克隆 boxes 的张量
                 result_clone[:, [0, 2]] += x
                 result_clone[:, [1, 3]] += y
-                
+                print(f"result_clone: {result_clone}")
                 # 直接更新 result_cpu.boxes.xyxy 的值
                 result_cpu.boxes._xyxy = result_clone
                 pred_results.append(result_cpu)
@@ -86,7 +109,7 @@ class yolov10_detection(PTServingBaseService):
             boxes = res.boxes._xyxy.cpu()  # 获取 bounding boxes 并转换为 CPU 张量
             scores = res.boxes.conf.cpu()  # 获取置信度分数并转换为 CPU 张量
             classes = res.boxes.cls.cpu()  # 获取类别索引并转换为 CPU 张量
-            print("clses:", classes)
+            # print("clses:", classes)
             #如果不是missing_hole
 
             all_boxes.append(boxes)
@@ -113,6 +136,6 @@ class yolov10_detection(PTServingBaseService):
         result['detection_boxes'] = detection_boxes
         result['detection_scores'] = detection_scores
 
-        print('result:', result)
+        # print('result:', result)
 
         return result

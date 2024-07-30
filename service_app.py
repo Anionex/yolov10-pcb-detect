@@ -7,7 +7,7 @@ from customize_service import yolov10_detection
 from skimage.filters import threshold_sauvola
 
 # 初始化目标检测服务
-service = yolov10_detection(model_name="yolov10", model_path="weights/best.pt")
+service = yolov10_detection(model_name="yolov10", model_path="weights/best-3.pt")
 
 # 用于缓存预测和标注结果的字典
 cache = {}
@@ -31,6 +31,7 @@ def postprocess(data):
 # 读取标注文件
 def read_annotations(image_path):
     base_name = os.path.splitext(os.path.basename(image_path))[0]
+    # 在此处添加数据集目录，会自动递归式查找标注文件
     search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets"]
     
     for search_dir in search_dirs:
@@ -63,7 +64,7 @@ def draw_boxes(image_path, result):
         score = result['detection_scores'][i]
 
         ymin, xmin, ymax, xmax = box
-        print(f"print a bbox at {xmin}, {ymin}, {xmax}, {ymax}")
+        # print(f"print a bbox at {xmin}, {ymin}, {xmax}, {ymax}")
         cv2.rectangle(image, (int(xmin), int(ymin)), (int(xmax), int(ymax)), (0, 0, 255), 2)
         
         label_text = f"{label}: {score:.2f}"
@@ -235,6 +236,7 @@ with gr.Blocks() as demo:
     run_batch_val_btn.click(run_batch_val)
 # 启动Gradio应用
 if __name__ == "__main__":
+    # 创建临时输出目录
     if not os.path.exists("tmp_output"):
         os.makedirs("tmp_output")
     demo.launch()
