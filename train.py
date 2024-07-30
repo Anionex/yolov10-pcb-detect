@@ -1,13 +1,13 @@
-# import comet_ml
+import comet_ml
 import torch
 from ultralytics import YOLOv10
 import os
 
-# os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
+os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
 if __name__ == '__main__':
     
 
-    # comet_ml.init(project_name="yolov10-pcb-defect-detection")
+    comet_ml.init(project_name="yolov10-pcb-defect-detection")
     # Load a model
     torch.cuda.empty_cache()
     model = YOLOv10("weights/yolov10s.pt")  # load a pretrained model (recommended for training)
@@ -19,7 +19,7 @@ if __name__ == '__main__':
         imgsz=608, # imgsz应该尽量贴近训练集图片的大小，但是要是32的倍数
         plots=True, batch=64,
         # close_mosaic=500,
-        # project="yolov10-pcb-defect-detection",
+        project="yolov10-pcb-defect-detection",
         # degrees=180,
         auto_augment="autoaugment",
         cache=True, # 缓存数据集，加快训练速度

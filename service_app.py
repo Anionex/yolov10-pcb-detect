@@ -104,7 +104,7 @@ def draw_labels(image_path, annotations):
 # 目标检测函数，综合以上各个步骤
 def detect_objects(image_path):
     if image_path in cache:
-        return cache[image_path]
+        return cache[image_path]["predicted_image_path"]
 
     # 调用服务处理图像
     post_data = preprocess_image(image_path)
@@ -118,7 +118,12 @@ def detect_objects(image_path):
     
 
     # 将结果存入缓存
-    cache[image_path] = predicted_image_path
+    cache[image_path] = {
+        "detection_boxes": result['detection_boxes'],
+        "detection_classes": result['detection_classes'],
+        "detection_scores": result['detection_scores'],
+        "predicted_image_path": predicted_image_path
+    }
     
     return predicted_image_path
 
@@ -200,15 +205,165 @@ def update_image(choice, image_path):
         
                     
 
-def run_batch_val():
-    pass
+import glob
+from sklearn.metrics import precision_recall_curve, average_precision_score, precision_score, recall_score
+
+import numpy as np
+from sklearn.metrics import precision_recall_curve
+import os
+import json
+
+def compute_iou(box1, box2):
+    """
+    计算两个边界框的 IOU
+    """
+    x1_max = max(box1[0], box2[0])
+    y1_max = max(box1[1], box2[1])
+    x2_min = min(box1[2], box2[2])
+    y2_min = min(box1[3], box2[3])
+
+    inter_area = max(0, x2_min - x1_max) * max(0, y2_min - y1_max)
+    box1_area = (box1[2] - box1[0]) * (box1[3] - box1[1])
+    box2_area = (box2[2] - box2[0]) * (box2[3] - box2[1])
+    union_area = box1_area + box2_area - inter_area
+
+    return inter_area / union_area if union_area != 0 else 0
+
+def compute_ap(recall, precision):
+    """
+    计算平均精度（AP）
+    """
+    if len(recall) == 0 or len(precision) == 0:
+        return 0
+
+    mrec = np.concatenate(([0.], recall, [1.]))
+    mpre = np.concatenate(([0.], precision, [0.]))
+
+    for i in range(mpre.size - 1, 0, -1):
+        mpre[i - 1] = np.maximum(mpre[i - 1], mpre[i])
+
+    changing_points = np.where(mrec[1:] != mrec[:-1])[0]
+    ap = np.sum((mrec[changing_points + 1] - mrec[changing_points]) * mpre[changing_points + 1])
+    return ap
+
+def run_batch_test(test_dir, output_dir="tmp_output/test"):
+    """
+    本方法用于批量测试选定目录下的所有图像，输出检测后的图像，并且通过和标注文件自动比较，
+    计算mAP50，最终输出到一个json文件中
+    """
+    cache.clear()  # 防止缓存影响测试结果
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    all_true_boxes = []
+    all_pred_boxes = []
+    all_true_labels = []
+    all_pred_labels = []
+    all_scores = []
+
+    for root, dirs, files in os.walk(test_dir):
+        for file in files:
+            if file.endswith((".jpg", ".jpeg", ".png", ".bmp")):
+                image_path = os.path.join(root, file)
+
+                # 获取标注结果
+                annotations = read_annotations(image_path)
+                if len(annotations) == 0:  # 如果没有标注文件，跳过
+                    print(f"未找到标注文件: {image_path}")
+                    continue
+
+                # 获取检测结果
+                predicted_image_path = display_predicted_image(image_path)
+
+                # 读取检测结果框和标签
+                pred_data = cache[image_path]
+                pred_boxes = pred_data['detection_boxes']
+                pred_labels = pred_data['detection_classes']
+                scores = pred_data['detection_scores']
+
+                # 读取标注框和标签
+                true_boxes = []
+                true_labels = []
+                for annotation in annotations:
+                    code, cx, cy, w, h = map(float, annotation)
+                    xmin = cx - w / 2
+                    ymin = cy - h / 2
+                    xmax = cx + w / 2
+                    ymax = cy + h / 2
+                    true_boxes.append([xmin, ymin, xmax, ymax])
+                    true_labels.append(int(code))
+
+                # 将结果加入总列表
+                all_true_boxes.extend(true_boxes)
+                all_pred_boxes.extend(pred_boxes)
+                all_true_labels.extend(true_labels)
+                all_pred_labels.extend(pred_labels)
+                all_scores.extend(scores)
+
+    # 计算每个类别的平均精度（AP）和mAP
+    unique_labels = list(set(all_true_labels))
+    aps = []
+    for label in unique_labels:
+        true_label_boxes = [box for i, box in enumerate(all_true_boxes) if all_true_labels[i] == label]
+        pred_label_boxes = [box for i, box in enumerate(all_pred_boxes) if all_pred_labels[i] == label]
+        pred_label_scores = [score for i, score in enumerate(all_scores) if all_pred_labels[i] == label]
+
+        if not true_label_boxes or not pred_label_boxes:
+            continue
+
+        # 计算 IOU
+        true_positives = []
+        scores = []
+        for true_box in true_label_boxes:
+            best_iou = 0
+            best_pred_idx = -1
+            for i, pred_box in enumerate(pred_label_boxes):
+                iou = compute_iou(true_box, pred_box)
+                if iou > best_iou:
+                    best_iou = iou
+                    best_pred_idx = i
+            if best_iou > 0.5:
+                true_positives.append(1)
+                scores.append(pred_label_scores[best_pred_idx])
+                pred_label_boxes.pop(best_pred_idx)
+                pred_label_scores.pop(best_pred_idx)
+            else:
+                true_positives.append(0)
+                scores.append(0)
+
+        false_positives = [1 - tp for tp in true_positives]
+
+        # 保证有正样本和负样本
+        if len(true_positives) == 0 or len(scores) == 0:
+            continue
+
+        labels = true_positives + [0] * len(pred_label_boxes)
+        scores = scores + pred_label_scores
+
+        precision, recall, _ = precision_recall_curve(labels, scores)
+        if len(precision) > 0 and len(recall) > 0:
+            ap = compute_ap(recall, precision)
+            aps.append(ap)
+
+    mAP50 = np.mean(aps) if aps else 0
+
+    result_summary = {
+        "mAP50": mAP50
+    }
+
+    # 将结果写入JSON文件
+    with open(os.path.join(output_dir, "results.json"), "w") as f:
+        json.dump(result_summary, f, indent=4)
+    
+    print(f"Batch test results saved to {os.path.join(output_dir, 'results.json')}")
+    return result_summary
 
 image_input = gr.Image(type="filepath", label="Upload Image")
 image_output = gr.Image(type="filepath", label="Output Image")
 clear_cache = gr.Button("Clear Cache(delete all cached results)")
-run_batch_val_btn = gr.Button("Run Batch Validation")
+run_batch_test_btn = gr.Button("Run Batch Test")
 # 创建一个组件让用户选择validation set的位置
-val_dir_input = gr.File(file_count="directory", label="Validation Set Directory", height="2vh")
+test_dir_input = gr.Textbox(placeholder="input test dir", label="Test Set Directory")
 
 with gr.Blocks() as demo:
     with gr.Row():
@@ -223,8 +378,9 @@ with gr.Blocks() as demo:
     clear_cache.render()
     with gr.Row():
         image_output.render()
-    run_batch_val_btn.render()
-    val_dir_input.render()
+    run_batch_test_btn.render()
+    test_dir_input.render()
+    test_result=gr.Textbox(placeholder="waiting", label="Test Result")
 
     btn_pred.click(update_image, inputs=[gr.State("Predicted Image"), image_input], outputs=image_output)
     btn_label.click(update_image, inputs=[gr.State("Labeled Image"), image_input], outputs=image_output)
@@ -233,7 +389,7 @@ with gr.Blocks() as demo:
     btn_edge.click(update_image, inputs=[gr.State("Edge Image"), image_input], outputs=image_output)
     
     clear_cache.click(lambda: cache.clear())
-    run_batch_val_btn.click(run_batch_val)
+    run_batch_test_btn.click(run_batch_test, inputs=[test_dir_input], outputs=[test_result])
 # 启动Gradio应用
 if __name__ == "__main__":
     # 创建临时输出目录

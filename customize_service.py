@@ -19,8 +19,8 @@ class yolov10_detection():
         # 此处跳到608，以适应两个数据集的图片大小
         # 训练时，也应该调到608(32倍数)
         self.window_size = 608 # 滑动窗口的大小
-        self.step_size = 304   # 滑动窗口的步长
-        self.predict_conf = 0.5 # 预测准确阈值
+        self.step_size = 320   # 滑动窗口的步长
+        self.predict_conf = 0.6 # 预测准确阈值
         self.nms_threshold = 0.1  # NMS 阈值
 
     def _preprocess(self, data):
@@ -67,7 +67,10 @@ class yolov10_detection():
             
             window_image = window
             
-            pred_result = self.model(window_image, conf=self.predict_conf)
+            pred_result = self.model(window_image, 
+                                     conf=self.predict_conf, 
+                                    #  augment=True # 感觉对pcb检测没什么用，有时候有副作用，很少有正向作用
+                                     )
             for result in pred_result:
                 
                 # 将检测到的结果位置映射回原图
