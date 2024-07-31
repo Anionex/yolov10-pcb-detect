@@ -32,7 +32,7 @@ def postprocess(data):
 def read_annotations(image_path):
     base_name = os.path.splitext(os.path.basename(image_path))[0]
     # 在此处添加数据集目录，会自动递归式查找标注文件
-    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets"]
+    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\utils\labels_output", r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets"]
     
     for search_dir in search_dirs:
         # 遍历目录及其所有子目录
