@@ -20,7 +20,7 @@ class yolov10_detection():
         # 训练时，也应该调到608(32倍数)
         self.window_size = 608 # 滑动窗口的大小
         self.step_size = 320   # 滑动窗口的步长
-        self.predict_conf = 0.6 # 预测准确阈值
+        self.predict_conf = 0.4 # 预测准确阈值
         self.nms_threshold = 0.1  # NMS 阈值
 
     def _preprocess(self, data):
@@ -61,7 +61,8 @@ class yolov10_detection():
 
     def _inference(self, data):
         image = cv2.imread(self.capture) # imread后的通道为BGR
-        
+        # image=cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) # 转换为RGB
+        # image=cv2.cvtColor(image, cv2.COLOR_GRAY2BGR) # 转换为RGB
         pred_results = []
         for (x, y, window) in self._slide_window(image, self.window_size, self.step_size):
             

@@ -7,8 +7,8 @@ from customize_service import yolov10_detection
 from skimage.filters import threshold_sauvola
 
 # 初始化目标检测服务
-service = yolov10_detection(model_name="yolov10", model_path="weights/best-3.pt")
-
+service = yolov10_detection(model_name="yolov10", model_path="weights/best-use-origin-and-grey-and-add-pcb-use-update-hyper-param-2.pt")
+# service = yolov10_detection(model_name="yolov10", model_path="weights/best-use-origin-and-grey-and-add-pcb-use-update-hyper-param-2.pt")
 # 用于缓存预测和标注结果的字典
 cache = {}
 
