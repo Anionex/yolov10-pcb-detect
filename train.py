@@ -1,5 +1,7 @@
 import comet_ml
 import torch
+import torch_npu
+from torch_npu.contrib import transfer_to_npu
 from ultralytics import YOLOv10
 import os
 
@@ -32,8 +34,8 @@ if __name__ == '__main__':
         # bgr=0.5, # 以指定概率随机改变图像的颜色通道顺序，提高模型对不同颜色的物体的识别能力
         close_mosaic=20, # 最后稳定训练
         scale=0.3,
-        device=[0, 1],
+        # device=[0, 1],
 #         device=[0,1,2,3],
-#         device=0,
+        device=0,
     )
 
