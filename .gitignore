@@ -5,7 +5,7 @@ __pycache__/
 tmp_output/
 test.png
 ultralytics.egg-info/
-
+yolov10-pcb-defect-detection
 data/
 
 # C extensions
