@@ -1,4 +1,4 @@
-import comet_ml
+# import comet_ml
 import torch
 import torch_npu
 from torch_npu.contrib import transfer_to_npu
@@ -9,7 +9,7 @@ os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
 if __name__ == '__main__':
     
 
-    comet_ml.init(project_name="yolov10-pcb-defect-detection")
+    # comet_ml.init(project_name="yolov10-pcb-defect-detection")
     # Load a model
     torch.cuda.empty_cache()
     model = YOLOv10("weights/yolov10s.pt")  # load a pretrained model (recommended for training)
