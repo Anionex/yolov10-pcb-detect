@@ -38,7 +38,7 @@ class yolov10_detection(PTServingBaseService):
         
         for y in range(0, height, step_size):
             for x in range(0, width, step_size):
-                # print(f"detect area left top: ({x}, {y})")
+                print(f"detect area left top: ({x}, {y})")
                 # Ensure the window is properly cropped at the image edges
                 crop_x = min(x, width - window_size)
                 crop_y = min(y, height - window_size)
