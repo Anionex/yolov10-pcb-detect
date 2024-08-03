@@ -1,3 +1,4 @@
+挑战杯“揭榜挂帅”团队“想去研究大模型”的代码仓库。
 # TODO
 - [✔] fix nms and red pcb defection
 - [✔] change conf and slide method
