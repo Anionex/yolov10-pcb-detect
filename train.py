@@ -17,7 +17,6 @@ if __name__ == '__main__':
     
     # 用于resume
 #     model = YOLOv10("yolov10-pcb-defect-detection/train19/weights/last.pt")
-    # Train the model with 2 GPUs
     results = model.train(
 #         resume=True,
         data="datasets/data.yaml", 
