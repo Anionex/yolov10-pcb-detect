@@ -28,7 +28,7 @@ if __name__ == '__main__':
         # batch=32,
         #
         amp=False,
-        fraction=0.1, #temp
+        # fraction=0.1, #temp
         # close_mosaic=500,
         project="yolov10-pcb-defect-detection",
         # degrees=180,
