@@ -9,26 +9,23 @@ if __name__ == '__main__':
     
 
     # comet_ml.init(project_name="yolov10-pcb-defect-detection")
-    # Load a model
+    # release memory
     torch.cuda.empty_cache()
     torch.npu.empty_cache()
     torch.npu.set_per_process_memory_fraction(0.8, 0)
-    model = YOLOv10("weights/yolov10s.pt")  # load a pretrained model (recommended for training)
+    # Load a model
+    model = YOLOv10("weights/yolov10s.pt")  
     
-    # 用于resume
-#     model = YOLOv10("yolov10-pcb-defect-detection/train19/weights/last.pt")
     results = model.train(
-#         resume=True,
+#       resume=True,
         data="datasets/data.yaml", 
-        epochs=200, # 300个epoch是一个合理的初始值，但由于我的数据集
+        epochs=200, 
         imgsz=608, # imgsz应该尽量贴近训练集图片的大小，但是要是32的倍数
         plots=True, 
         batch=96,
         # batch=32,
-        #
         amp=False,
-        # fraction=0.1, #temp
-        # close_mosaic=500,
+        # fraction=0.1, # 设置fraction参数用于只训练数据集的一部分，设置0.1表示只训练10%的数据集
         project="yolov10-pcb-defect-detection",
         # degrees=180,
         auto_augment="autoaugment",
@@ -39,8 +36,6 @@ if __name__ == '__main__':
         # bgr=0.5, # 以指定概率随机改变图像的颜色通道顺序，提高模型对不同颜色的物体的识别能力
         close_mosaic=20, # 最后稳定训练
         scale=0.3,
-        # device=[0, 1],
-#         device=[0,1,2,3],
         device=0,
     )
 
