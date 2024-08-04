@@ -7,7 +7,7 @@ from customize_service import yolov10_detection
 from skimage.filters import threshold_sauvola
 
 # 初始化目标检测服务
-service = yolov10_detection(model_name="yolov10", model_path="weights/best-use-origin-and-grey-and-add-pcb-use-update-hyper-param-2.pt")
+service = yolov10_detection(model_name="yolov10", model_path="weights/best-the-last.pt")
 # service = yolov10_detection(model_name="yolov10", model_path="weights/best-use-origin-and-grey-and-add-pcb-use-update-hyper-param-2.pt")
 # 用于缓存预测和标注结果的字典
 cache = {}
@@ -32,7 +32,10 @@ def postprocess(data):
 def read_annotations(image_path):
     base_name = os.path.splitext(os.path.basename(image_path))[0]
     # 在此处添加数据集目录，会自动递归式查找标注文件
-    search_dirs = [r"C:\Users\10051\Desktop\yolov10-test\yolov10\utils\labels_output", r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", "datasets"]
+    search_dirs = [
+        # r"C:\Users\10051\Desktop\yolov10-test\yolov10\utils\labels_rotate_output",
+        r"C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\PCB_瑕疵初赛样例集", 
+        "datasets"]
     
     for search_dir in search_dirs:
         # 遍历目录及其所有子目录

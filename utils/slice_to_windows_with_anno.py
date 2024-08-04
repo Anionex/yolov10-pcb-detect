@@ -57,8 +57,10 @@ def convert_annotations(annotations, x_offset, y_offset, window_size, img_width,
     Returns:
         list: List of converted annotations for the cropped window.
     """
+    mapping=[0,4,3,1,5]
     new_annotations = []
     for cls, x, y, w, h in annotations:
+        cls = mapping[int(cls)]
         # Convert normalized coordinates to absolute coordinates
         x_center = x * img_width
         y_center = y * img_height
@@ -178,7 +180,7 @@ if __name__ == '__main__':
     images_output_dir = "images_output"
     labels_output_dir = "labels_output"
     
-    input_directories = ["Missing_hole", 
+    input_directories = [
                         "Mouse_bite", 
                         "Open_circuit", 
                         "Short", 
