@@ -5,13 +5,14 @@ from torch_npu.contrib import transfer_to_npu
 from ultralytics import YOLOv10
 import os
 
-os.environ["COMET_API_KEY"] = "Imas5SnynejXZLDsdttseSZhr"
 if __name__ == '__main__':
     
 
     # comet_ml.init(project_name="yolov10-pcb-defect-detection")
     # Load a model
     torch.cuda.empty_cache()
+    torch.npu.empty_cache()
+    torch.npu.set_per_process_memory_fraction(0.8, 0)
     model = YOLOv10("weights/yolov10s.pt")  # load a pretrained model (recommended for training)
     
     # 用于resume
@@ -22,7 +23,12 @@ if __name__ == '__main__':
         data="datasets/data.yaml", 
         epochs=200, # 300个epoch是一个合理的初始值，但由于我的数据集
         imgsz=608, # imgsz应该尽量贴近训练集图片的大小，但是要是32的倍数
-        plots=True, batch=96,
+        plots=True, 
+        batch=96,
+        # batch=32,
+        #
+        amp=False,
+        fraction=0.1, #temp
         # close_mosaic=500,
         project="yolov10-pcb-defect-detection",
         # degrees=180,
