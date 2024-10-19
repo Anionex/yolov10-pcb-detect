@@ -1,7 +1,7 @@
 # import comet_ml
 import torch
-import torch_npu
-from torch_npu.contrib import transfer_to_npu
+# import torch_npu
+# from torch_npu.contrib import transfer_to_npu
 from ultralytics import YOLOv10
 import os
 
@@ -11,8 +11,8 @@ if __name__ == '__main__':
     # comet_ml.init(project_name="yolov10-pcb-defect-detection")
     # release memory
     torch.cuda.empty_cache()
-    torch.npu.empty_cache()
-    torch.npu.set_per_process_memory_fraction(0.8, 0)
+    # torch.npu.empty_cache()
+    # torch.npu.set_per_process_memory_fraction(0.8, 0)
     # Load a model
     model = YOLOv10("weights/yolov10s.pt")  
     
@@ -24,7 +24,7 @@ if __name__ == '__main__':
         plots=True, 
         batch=96,
         # batch=32,
-        amp=False,
+        # amp=False,
         # fraction=0.1, # 设置fraction参数用于只训练数据集的一部分，设置0.1表示只训练10%的数据集
         project="yolov10-pcb-defect-detection",
         # degrees=180,
