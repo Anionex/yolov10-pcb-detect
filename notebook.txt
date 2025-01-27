@@ -23,51 +23,8 @@ python -c "import torch; print(torch.cuda.is_available())"
 conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia
 
 
-## 第一次训练，batchsize=32，内存爆了，应该是显存。不算有效训练。
-## 第二次 batchsize=8，显存3.5g左右。Training completed in 0 hours, 6 minutes, 22 seconds.
-# 把train12改成train文件夹，前面序号的怀疑是废弃的，全删了
-
-## epoch time几乎没有改变（batch 8 -> 16） 一轮都是6 min / 10 = 0.6min / epoch 10轮6分钟
-## 要训练一个小时 ：
-## 100 轮 其他保持不变
-##  要25轮的话，其他要乘以4倍。也就是说，数据集规模扩大四倍！
-## 第三轮有效训练，扩大三倍规模，batchsize=16.epoch忘记调整了。... 结果只用了8分钟，怎么回事。
-#### 知道原因了，因为没有完全变成两倍，而且bacthsize越大，用时越短。两个因素差不多，最后就多一点时间（）
-## 调完100之后，训练了28分钟，这怎么不是线性增长的。
-
-
 yolo task=detect mode=val model="path to your custom model" data="path to your data.yaml file" device=0
 yolo task=detect mode=val model="weights/best-A800.pt" data="C:\Users\10051\Desktop\yolov10-test\yolov10\datasets\pcb-defect-dataset/data.yaml" device=0
     yolo task=detect mode=val model="C:/Users/10051/Desktop/yolov10-test/yolov10/runs/detect/train5/weights/best.pt" data="datasets/pcb-defect-dataset/data.yaml" conf=0.5 device=0
 
-
-
-
-
-
-yolo task=detect mode=predict model="path/to/best.pt" source="Image File Path" device="CPU / 0,1,2,etc"
-
-
-
-###
-用4060跑！
-C:\Users\10051\Desktop\yolov10-test\yolov10\ultralytics\utils\plotting.py:899: UserWarning: Glyph 21103 (\N{CJK UNIFIED IDEOGRAPH-526F}) missing from font(s) DejaVu Sans.
-  fig.savefig(fname, dpi=200)
-C:\Users\10051\Desktop\yolov10-test\yolov10\ultralytics\utils\plotting.py:899: UserWarning: Glyph 26412 (\N{CJK UNIFIED IDEOGRAPH-672C}) missing from font(s) DejaVu Sans.
-  fig.savefig(fname, dpi=200)
-(yolov10) PS C:\Users\10051\Desktop\yolov10-test\yolov10> Write-Output "Training completed in $($duration.Hours) hours, $($duration.Minutes) minutes, $($duration.Seconds) seconds."
-Training completed in 4 hours, 20 minutes, 10 seconds.
-
-4小时20分钟
-
-###
-
-
-
-
-
-
-
-docker run -itd --cap-add=SYS_PTRACE -e ASCEND_VISIBLE_DEVICES=0  -v /home:/home_host -p 51234:22 -u=0 --name myimageaaa  swr.cn-southwest-2.myhuaweicloud.com/atelier/pytorch_1_11_ascend:pytorch_1.11.0-cann_7.0.1-py_3.9-euler_2.10.7-aarch64-snt9b-20231107190844-50a1a83  /bin/bash
-cker pull swr.cn-southwest-2.myhuaweicloud.com/atelier/pytorch_1_11_ascend:pytorch_1.11.0-cann_7.0.1-py_3.9-euler_2.10.7-aarch64-snt9b-20231107190844-50a1a83~
 
