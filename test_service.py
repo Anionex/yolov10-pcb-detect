@@ -6,8 +6,9 @@ import cv2
 image_name = "\
 02_Short_Img.bmp\
 "
+model_name = "best.pt"
 test_path = f"data/{image_name}"
-service = yolov10_detection(model_name="yolov10", model_path="weights/best-A800.pt")
+service = yolov10_detection(model_name="yolov10", model_path=f"weights/{model_name}")
 
 post_data = {"input_txt": {os.path.basename(test_path): open(test_path, "rb")}}
 
