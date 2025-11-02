@@ -180,3 +180,9 @@ pnnx*
 /ultralytics/assets/
 !ultralytics/**/*
 !weights/**/*
+
+# Re-ignore Python cache files even in tracked directories
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
