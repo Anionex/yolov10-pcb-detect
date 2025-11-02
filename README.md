@@ -17,10 +17,9 @@
 - Spurious_copper（多余铜）
 
 ## 环境要求
-- Python 3.9+
+- Python 3.9
 - CUDA 12.x（推荐）
 - PyTorch 2.0+
-- Windows 11 / Linux
 
 ## 快速启动
 
@@ -38,22 +37,16 @@ conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvi
 
 ### 3. 安装项目依赖
 ```bash
-# 安装基础依赖
-pip install pandas huggingface_hub
-
-# 安装计算机视觉库
-pip install ultralytics supervision opencv-python
-
-# 安装其他依赖
+# 安装所有必需依赖（包含huggingface-hub、opencv-python、gradio、supervision、pandas等）
 pip install -r requirements.txt
 ```
 
 ### 4. 运行推理测试
 ```bash
-# 测试基础推理功能
-python test_inference.py
+# 使用项目中的YOLOv10实现进行测试
+python test_service.py
 
-# 或者使用现有的预测脚本
+# 或者使用基础预测脚本
 python predict.py
 ```
 
@@ -72,11 +65,11 @@ python app-origin.py
 ├── tmp_output/           # 推理结果输出目录
 ├── utils/                # 数据处理工具
 ├── weights/              # 模型权重文件
-├── ultralytics/          # YOLOv10源码
+├── ultralytics/          # 项目内置YOLOv10实现
 ├── service_app.py        # Gradio应用（推荐，功能丰富）
 ├── app-origin.py         # 官方Gradio应用
 ├── predict.py            # 基础预测脚本
-├── test_inference.py     # 推理功能测试脚本
+├── test_service.py       # 推理测试脚本
 ├── customize_service.py  # 自定义服务接口
 ├── config.py             # 配置文件（类别定义）
 ├── train.py              # 训练脚本
@@ -88,8 +81,8 @@ python app-origin.py
 
 ### 基础推理
 1. 将待检测的PCB图片放入 `data/` 目录
-2. 运行 `python test_inference.py` 进行测试
-3. 检测结果将保存在 `tmp_output/` 目录
+2. 运行 `python test_service.py` 使用项目中的YOLOv10实现进行测试
+3. 检测结果将保存在 `tmp_output/` 目录和 `result.json` 文件中
 
 ### Web界面使用
 1. 运行 `python service_app.py` 启动服务
@@ -102,9 +95,10 @@ python app-origin.py
 - 调整推理参数以适应您的应用场景
 
 ## 性能基准
-- **推理速度**: ~7-9ms/图片（640x640，RTX 4060）
+- **推理速度**: ~8-24ms/区域（608x608，RTX 4060，使用项目内置YOLOv10）
 - **支持格式**: JPG, JPEG, PNG, BMP
-- **推荐分辨率**: 640x640
+- **推荐分辨率**: 608x608（项目默认设置）
+- **检测机制**: 滑动窗口大图检测
 
 ## 开发状态
 - [✔] 修复NMS和红色PCB瑕疵检测
@@ -113,23 +107,3 @@ python app-origin.py
 - [✔] 推理功能测试和验证
 - [✔] 跨平台兼容性支持
 
-## 故障排除
-
-### 常见问题
-1. **CUDA不可用**: 检查CUDA版本与PyTorch版本匹配
-2. **依赖冲突**: 使用独立的conda环境
-3. **模型加载失败**: 检查模型文件路径和格式
-4. **推理结果为空**: 调整置信度阈值或检查图片质量
-
-### 环境验证
-运行以下命令验证环境配置：
-```bash
-python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
-```
-
-## 技术支持
-如遇到问题，请检查：
-1. Python版本兼容性
-2. CUDA和PyTorch版本匹配
-3. 依赖包版本冲突
-4. 模型文件完整性
