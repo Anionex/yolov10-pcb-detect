@@ -187,3 +187,4 @@ pnnx*
 **/*.pyc
 **/*.pyo
 **/*.pyd
+yolo格式数据集结构说明.md

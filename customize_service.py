@@ -38,7 +38,7 @@ class yolov10_detection():
         
         for y in range(0, height, step_size):
             for x in range(0, width, step_size):
-                print(f"detect area left top: ({x}, {y})")
+                # print(f"detect area left top: ({x}, {y})")  # 注释print以提速
                 # Ensure the window is properly cropped at the image edges
                 crop_x = min(x, width - window_size)
                 crop_y = min(y, height - window_size)
@@ -51,8 +51,8 @@ class yolov10_detection():
                 #     # cv2.circle(cropped_image, (1184 - crop_x, 1023 - crop_y), 10, (0, 255, 0), 2)
                     
                 
-                # 保存窗口图片到tmp_output/
-                cv2.imwrite(f"tmp_output/windows/{crop_x}_{crop_y}.png", cropped_image)
+                # 保存窗口图片到tmp_output/ (benchmark时注释以提速)
+                # cv2.imwrite(f"tmp_output/windows/{crop_x}_{crop_y}.png", cropped_image)
                 
                 yield (crop_x, crop_y, cropped_image)
 
@@ -69,7 +69,8 @@ class yolov10_detection():
             window_image = window
             
             pred_result = self.model(window_image, 
-                                     conf=self.predict_conf, 
+                                     conf=self.predict_conf,
+                                     verbose=False,  # 关闭推理过程的输出日志
                                     #  augment=True # 感觉对pcb检测没什么用，有时候有副作用，很少有正向作用
                                      )
             for result in pred_result:
@@ -79,7 +80,7 @@ class yolov10_detection():
                 result_clone = result_cpu.boxes.xyxy.clone()  # 克隆 boxes 的张量
                 result_clone[:, [0, 2]] += x
                 result_clone[:, [1, 3]] += y
-                print(f"result_clone: {result_clone}")
+                # print(f"result_clone: {result_clone}")  # 注释print以提速
                 # 直接更新 result_cpu.boxes.xyxy 的值
                 result_cpu.boxes._xyxy = result_clone
                 pred_results.append(result_cpu)

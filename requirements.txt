@@ -20,6 +20,6 @@ scikit-learn>=1.3.0
 lxml
 
 # Benchmark相关依赖
-# ensemble-boxes  # WBF (Weighted Boxes Fusion) 用于优化NMS
-# tabulate  # 表格美化输出
-# tqdm  
+ensemble-boxes  # WBF (Weighted Boxes Fusion) 用于优化NMS
+tabulate  # 表格美化输出
+tqdm  

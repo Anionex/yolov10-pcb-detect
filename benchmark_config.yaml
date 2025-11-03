@@ -1,0 +1,108 @@
+# PCB Detection Benchmark Configuration
+# 用于配置不同的测试场景
+
+# 基础配置
+base:
+  model_path: "weights/best.pt"
+  dataset_path: "data/mix_pcb_test_dataset/test"  # 合并的PCB测试数据集
+  conf_threshold: 0.4
+  nms_threshold: 0.1
+  save_dir: "benchmark_results"
+
+# 不同优化策略的配置
+experiments:
+  # 1. 基线 - 当前配置
+  baseline:
+    name: "Baseline (current)"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 320
+    augment: false
+    
+  # 2. 调整置信度阈值
+  high_confidence:
+    name: "High Confidence"
+    conf_threshold: 0.5
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 320
+    augment: false
+    
+  low_confidence:
+    name: "Low Confidence"
+    conf_threshold: 0.3
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 320
+    augment: false
+    
+  # 3. 调整NMS阈值
+  loose_nms:
+    name: "Loose NMS"
+    conf_threshold: 0.4
+    nms_threshold: 0.2
+    window_size: 608
+    step_size: 320
+    augment: false
+    
+  tight_nms:
+    name: "Tight NMS"
+    conf_threshold: 0.4
+    nms_threshold: 0.05
+    window_size: 608
+    step_size: 320
+    augment: false
+    
+  # 4. 调整滑动窗口步长
+  more_overlap:
+    name: "More Overlap (step=160)"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 160  # 更多重叠
+    augment: false
+    
+  less_overlap:
+    name: "Less Overlap (step=480)"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 480  # 更少重叠，更快
+    augment: false
+    
+  # 5. TTA测试
+  with_tta:
+    name: "With TTA"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 608
+    step_size: 320
+    augment: true
+    
+  # 6. 多尺度窗口
+  large_window:
+    name: "Large Window (672)"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 672
+    step_size: 336
+    augment: false
+    
+  small_window:
+    name: "Small Window (544)"
+    conf_threshold: 0.4
+    nms_threshold: 0.1
+    window_size: 544
+    step_size: 272
+    augment: false
+
+# 每个瑕疵类型的权重 (用于计算weighted mAP)
+class_weights:
+  Mouse_bite: 1.0
+  Spur: 1.0
+  Missing_hole: 1.0
+  Short: 1.5  # 短路更重要
+  Open_circuit: 1.5  # 开路更重要
+  Spurious_copper: 1.0
+
