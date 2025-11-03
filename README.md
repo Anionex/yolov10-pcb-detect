@@ -1,7 +1,7 @@
 # YOLOv10 PCB瑕疵检测系统
 
 ## 简介
-第十九届"挑战杯"揭榜挂帅·华为赛道（高校赛道）复赛Rank35/320，决赛国家一等奖方案（算法部分）。使用在COCO数据集上经过预训练的YOLOv10模型进行迁移学习，专门用于PCB板瑕疵检测。
+第十九届"挑战杯"揭榜挂帅·华为赛道（高校赛道）复赛Rank27/320，决赛国家一等奖方案（算法部分）。使用在COCO数据集上经过预训练的YOLOv10模型进行迁移学习，专门用于PCB板瑕疵检测。
 
 ## 分类
 - 深度学习/计算机视觉
@@ -100,10 +100,103 @@ python app-origin.py
 - **推荐分辨率**: 608x608（项目默认设置）
 - **检测机制**: 滑动窗口大图检测
 
+## 数据集处理方法
+
+### PKU数据集转换
+将PKU数据集（VOC格式）转换为YOLO格式：
+```bash
+cd data/PCB_DATASET-PKU
+python ../../utils/pku_dataset_convert_to_yolo.py
+```
+数据均放在test集中，共693张。
+
+### 初赛样例集转换
+将初赛样例集整合为标准YOLO格式（含类别ID统一映射）：
+```bash
+python utils/preliminary_dataset_convert_to_yolo.py
+```
+转换后数据集位置：`data/PCB_瑕疵初赛样例集/yolo_dataset/`
+数据均放在test集中，共48张。
+
+### 复赛样例集转换
+将复赛样例集整合为标准YOLO格式（含类别ID统一映射）：
+```bash
+python utils/final_dataset_convert_to_yolo.py
+```
+转换后数据集位置：`data/PCB_瑕疵复赛样例集/yolo_dataset/`
+数据均放在test集中，共20张。
+
+### 合并所有测试数据集
+将三个数据集的测试集合并为一个统一的测试数据集：
+```bash
+python utils/merge_test_datasets.py
+```
+合并后数据集位置：`data/mix_pcb_test_dataset/`
+- 包含761张测试图片（PKU: 693张, 初赛: 48张, 复赛: 20张）
+- 统一的images和labels目录结构
+- 自动处理文件名冲突（添加数据集前缀）
+
+### 类别映射说明
+所有转换脚本统一使用以下类别映射：
+- 0: mouse_bite（鼠咬）
+- 1: spur（毛刺）
+- 2: missing_hole（缺孔）
+- 3: short（短路）
+- 4: open_circuit（开路）
+- 5: spurious_copper（多余铜）
+
+## Benchmark评估
+
+项目提供完整的benchmark评估工具，用于系统化测试模型性能：
+
+### 快速开始
+```bash
+# 安装额外依赖
+pip install ensemble-boxes tabulate
+
+# 运行benchmark（交互式）
+python run_benchmark.py
+
+# 或直接运行
+python benchmark.py --dataset_path datasets/test --model_path weights/best.pt
+```
+
+### 主要功能
+- ✅ **标准评估指标**: mAP, Precision, Recall, F1-Score
+- ✅ **速度分析**: FPS, 推理时间统计
+- ✅ **类别级别评估**: 每个瑕疵类型的详细指标
+- ✅ **批量实验**: 自动测试多种配置组合
+- ✅ **结果对比**: 可视化对比不同配置
+- ✅ **导出功能**: JSON和CSV格式结果
+
+### 相关文件
+- `benchmark.py` - 核心评估模块
+- `run_benchmark.py` - 便捷运行脚本（交互式）
+- `benchmark_config.yaml` - 配置文件（定义实验）
+- `example_benchmark.py` - 使用示例
+- `BENCHMARK_GUIDE.md` - 详细使用指南
+
+详细使用方法请查看 [BENCHMARK_GUIDE.md](./BENCHMARK_GUIDE.md)
+
+## Test Time优化技巧
+
+除了滑动窗口，还支持以下优化技术：
+
+1. **Test Time Augmentation (TTA)** - 多角度推理融合
+2. **Weighted Boxes Fusion (WBF)** - 替代NMS的框融合
+3. **Multi-Scale Testing** - 多尺度检测
+4. **Adaptive Sliding Window** - 自适应窗口策略
+5. **Confidence Calibration** - 置信度校准
+6. **Model Ensemble** - 多模型集成
+
+详见benchmark配置文件中的实验设置。
+
 ## 开发状态
 - [✔] 修复NMS和红色PCB瑕疵检测
 - [✔] 更新置信度和滑动方法
 - [✔] Conda环境配置和依赖管理
 - [✔] 推理功能测试和验证
 - [✔] 跨平台兼容性支持
+- [✔] Benchmark评估系统
+- [✔] Test Time优化方案
 

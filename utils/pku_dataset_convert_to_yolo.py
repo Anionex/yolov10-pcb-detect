@@ -6,8 +6,8 @@ import shutil
 from lxml import etree
 from PIL import Image
 
-TEST_RATIO = 0.2
-VAL_RATIO = 0.2
+TEST_RATIO = 1
+VAL_RATIO = 0
 
 OUTPUT_ROOT = "./yolo_dataset"
 
@@ -84,6 +84,28 @@ def post_conversion():
                 os.remove(fp)
 
 
+def organize_structure():
+    """整理目录结构，将图片和标注分别放到images和labels子目录"""
+    for subset in ["train", "val", "test"]:
+        subset_path = os.path.join(OUTPUT_ROOT, subset)
+        if not os.path.exists(subset_path):
+            continue
+        
+        images_path = os.path.join(subset_path, "images")
+        labels_path = os.path.join(subset_path, "labels")
+        os.makedirs(images_path, exist_ok=True)
+        os.makedirs(labels_path, exist_ok=True)
+        
+        # 移动文件到相应子目录
+        for f in os.listdir(subset_path):
+            src = os.path.join(subset_path, f)
+            if os.path.isfile(src):
+                if f.endswith('.jpg') or f.endswith('.png') or f.endswith('.bmp'):
+                    shutil.move(src, os.path.join(images_path, f))
+                elif f.endswith('.txt'):
+                    shutil.move(src, os.path.join(labels_path, f))
+
+
 def generate_data_yaml():
     with open(os.path.join(OUTPUT_ROOT, "data.yaml"), 'w') as w:
         w.write(
@@ -100,4 +122,5 @@ def generate_data_yaml():
 if __name__ == '__main__':
     handle_plain()
     post_conversion()
+    organize_structure()
     generate_data_yaml()
