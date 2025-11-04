@@ -147,18 +147,16 @@ python utils/merge_test_datasets.py
 
 ## Benchmark评估
 
-项目提供完整的benchmark评估工具，用于系统化测试模型性能：
+项目提供完整的benchmark评估工具，用于系统化测试模型性能。所有benchmark相关文件已整理到 `benchmark_tools/` 目录。
 
 ### 快速开始
 ```bash
-# 安装额外依赖
-pip install ensemble-boxes tabulate
+# 方式1: 使用根目录便捷脚本（推荐）
+python run_benchmark_tool.py --mode single --limit 10
 
-# 运行benchmark（交互式）
-python run_benchmark.py
-
-# 或直接运行
-python benchmark.py --dataset_path datasets/test --model_path weights/best.pt
+# 方式2: 进入benchmark_tools目录运行
+cd benchmark_tools
+python run_benchmark.py --mode single --limit 10
 ```
 
 ### 主要功能
@@ -166,17 +164,26 @@ python benchmark.py --dataset_path datasets/test --model_path weights/best.pt
 - ✅ **速度分析**: FPS, 推理时间统计
 - ✅ **类别级别评估**: 每个瑕疵类型的详细指标
 - ✅ **批量实验**: 自动测试多种配置组合
+- ✅ **样本数量控制**: `--limit` 参数快速验证（如 `--limit 10` 仅测试10张）
 - ✅ **结果对比**: 可视化对比不同配置
 - ✅ **导出功能**: JSON和CSV格式结果
 
-### 相关文件
-- `benchmark.py` - 核心评估模块
-- `run_benchmark.py` - 便捷运行脚本（交互式）
-- `benchmark_config.yaml` - 配置文件（定义实验）
-- `example_benchmark.py` - 使用示例
-- `BENCHMARK_GUIDE.md` - 详细使用指南
+### 三种运行模式
+- **Quick**: 快速测试单张图片 (`--mode quick`)
+- **Single**: 单次完整评估 (`--mode single`)
+- **Batch**: 批量实验对比 (`--mode batch`)
 
-详细使用方法请查看 [BENCHMARK_GUIDE.md](./BENCHMARK_GUIDE.md)
+### 相关文件
+```
+benchmark_tools/
+├── benchmark.py              # 核心评估引擎
+├── run_benchmark.py          # 命令行运行脚本
+├── benchmark_config.yaml     # 配置文件
+├── BENCHMARK_GUIDE.md        # 详细使用指南
+└── README.md                 # 工具说明文档
+```
+
+详细使用方法请查看 [benchmark_tools/BENCHMARK_GUIDE.md](./benchmark_tools/BENCHMARK_GUIDE.md)
 
 ## Test Time优化技巧
 
@@ -191,6 +198,19 @@ python benchmark.py --dataset_path datasets/test --model_path weights/best.pt
 
 详见benchmark配置文件中的实验设置。
 
+## 训练
+1. 首先下载yolov10s.pt到weights/下：
+```bash
+curl -o yolov10s.pt "https://github.com/jameslahm/yolov10/releases/download/v1.0/yolov10s.pt"
+```
+
+2. 在train.py中配置数据集和数据增强方法等参数
+
+3. 然后执行训练脚本：
+```bash
+python train.py
+```
+
 ## 开发状态
 - [✔] 修复NMS和红色PCB瑕疵检测
 - [✔] 更新置信度和滑动方法
@@ -199,4 +219,3 @@ python benchmark.py --dataset_path datasets/test --model_path weights/best.pt
 - [✔] 跨平台兼容性支持
 - [✔] Benchmark评估系统
 - [✔] Test Time优化方案
-
