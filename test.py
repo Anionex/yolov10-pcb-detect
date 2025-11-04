@@ -1,7 +1,5 @@
-from ultralytics import YOLOv10
+from yolov10_sliding_window import YOLOv10SlidingWindow
 
-# Load a model
-model = YOLOv10("weights/best.pt")  # load a custom model
-
-# Validate the model
-metrics = model.val(save=True, task="test")  # no arguments needed, dataset and settings remembered
+# 加载模型（自动使用滑动窗口验证器）
+model = YOLOv10SlidingWindow("weights/best.pt")
+metrics = model.val(save=True, task="test")
