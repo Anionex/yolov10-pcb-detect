@@ -7,7 +7,11 @@ import os
 import sys
 from pathlib import Path
 import yaml
-from benchmark import PCBBenchmark, compare_benchmarks
+
+# 添加父目录到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from benchmark_tools.benchmark import PCBBenchmark, compare_benchmarks
 from customize_service import yolov10_detection
 
 

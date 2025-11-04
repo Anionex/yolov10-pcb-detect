@@ -9,6 +9,7 @@ PCB瑕疵检测Benchmark模块
 """
 
 import os
+import sys
 import time
 import json
 import argparse
@@ -20,6 +21,9 @@ import torch
 from tqdm import tqdm
 import pandas as pd
 from datetime import datetime
+
+# 添加父目录到Python路径
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from customize_service import yolov10_detection
 from config import id2cls_name_custom

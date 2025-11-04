@@ -3,8 +3,8 @@
 
 # 基础配置
 base:
-  model_path: "weights/best.pt"
-  dataset_path: "data/mix_pcb_test_dataset/test"  # 合并的PCB测试数据集
+  model_path: "../weights/best.pt"
+  dataset_path: "../data/mix_pcb_test_dataset/test"  # 合并的PCB测试数据集
   conf_threshold: 0.4
   nms_threshold: 0.1
   save_dir: "benchmark_results"
